@@ -21,7 +21,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Todoアイテムを表すクラス
 class TodoItem {
   late String id;
   String text;
@@ -30,26 +29,23 @@ class TodoItem {
   late FocusNode focusNode;
 
   TodoItem({String? id, this.text = '', this.isDone = false}) {
-    this.id = id ?? UniqueKey().toString(); // IDがなければユニークなIDを生成
+    this.id = id ?? UniqueKey().toString();
     controller = TextEditingController(text: text);
     focusNode = FocusNode();
   }
 
-  // TextEditingControllerとFocusNodeを破棄するメソッド
   void dispose() {
     controller.dispose();
     focusNode.dispose();
   }
 
-  // JSONからTodoItemを生成するファクトリコンストラクタ
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     return TodoItem(id: json['id'], text: json['text'], isDone: json['isDone']);
   }
 
-  // TodoItemをJSONに変換するメソッド
   Map<String, dynamic> toJson() => {
     'id': id,
-    'text': controller.text, // 保存時はcontrollerの最新のテキストを使用
+    'text': controller.text, 
     'isDone': isDone,
   };
 }
@@ -60,24 +56,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<TodoItem> _todoItems = []; // TodoItemのリスト
+  List<TodoItem> _todoItems = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTodoItems(); // アプリ起動時にデータを読み込む
+    _loadTodoItems(); 
   }
 
   @override
   void dispose() {
-    // 全てのTodoItemのコントローラーを破棄
     for (var item in _todoItems) {
       item.dispose();
     }
     super.dispose();
   }
 
-  // SharedPreferencesからデータを読み込む
   Future<void> _loadTodoItems() async {
     final prefs = await SharedPreferences.getInstance();
     final String? todosString = prefs.getString('todoItems');
@@ -94,7 +88,6 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       } catch (e) {
         print("Error decoding todoItems: $e. Data: $todosString");
-        // エラー発生時は、破損した可能性のあるデータをクリアし、リストを空にする
         await prefs.remove('todoItems');
         setState(() {
           _todoItems = [];
@@ -103,7 +96,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // SharedPreferencesにデータを保存する
   Future<void> _saveTodoItems() async {
     final prefs = await SharedPreferences.getInstance();
     List<Map<String, dynamic>> todoListJson = _todoItems
@@ -112,7 +104,6 @@ class _MyHomePageState extends State<MyHomePage> {
     await prefs.setString('todoItems', json.encode(todoListJson));
   }
 
-  // 新しいタスクを追加するメソッド
   void _addTodoItem({
     String initialText = '',
     bool isDone = false,
@@ -124,7 +115,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     _saveTodoItems();
     if (requestFocus && mounted) {
-      // UIのビルド後にフォーカスを要求するため、少し遅延させる
       Future.delayed(Duration(milliseconds: 50), () {
         if (mounted && newItem.focusNode.canRequestFocus) {
           FocusScope.of(context).requestFocus(newItem.focusNode);
@@ -144,7 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _saveTodoItems();
   }
 
-  // タスクの完了状態を切り替えるメソッド
   void _toggleTodoStatus(int index, bool? value) {
     if (index < 0 || index >= _todoItems.length) return; // 範囲外なら何もしない
     setState(() {
@@ -160,13 +149,13 @@ class _MyHomePageState extends State<MyHomePage> {
       body: _todoItems.isEmpty
           ? Center(child: Text('タスクがありません。追加しましょう！'))
           : ListView.builder(
-              padding: EdgeInsets.only(bottom: 80), // FABと重ならないようにパディング
+              padding: EdgeInsets.only(bottom: 80), 
               itemCount: _todoItems.length,
               itemBuilder: (context, index) {
                 final todo = _todoItems[index];
                 return Dismissible(
-                  key: Key(todo.id), // 各DismissibleウィジェットにユニークなKeyを設定
-                  direction: DismissDirection.endToStart, // 右から左へのスワイプのみ許可
+                  key: Key(todo.id), 
+                  direction: DismissDirection.endToStart, 
                   onDismissed: (direction) {
                     String taskText = todo.controller.text.isNotEmpty
                         ? todo.controller.text
@@ -198,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           focusNode: todo.focusNode,
                           decoration: InputDecoration(
                             hintText: 'タスク内容を入力',
-                            border: InputBorder.none, // 枠線を消してスッキリさせる
+                            border: InputBorder.none, 
                           ),
                           style: TextStyle(
                             fontSize: 16,
@@ -208,16 +197,12 @@ class _MyHomePageState extends State<MyHomePage> {
                             color: todo.isDone ? Colors.grey : Colors.black87,
                           ),
                           onSubmitted: (value) {
-                            _saveTodoItems(); // 現在のタスクの変更を保存
+                            _saveTodoItems(); 
                             _addTodoItem(
                               requestFocus: true,
-                            ); // 新しいタスクを追加してフォーカス
+                            ); 
                           },
                           onChanged: (value) {
-                            // テキストが変更されるたびに保存することも可能ですが、
-                            // パフォーマンスへの影響を考慮し、onSubmittedや他のアクション時のみ保存します。
-                            // 必要であれば、ここで _saveTodoItems(); を呼び出すこともできます。
-                            // _saveTodoItems(); // リアルタイム保存 (頻繁な書き込みに注意)
                           },
                         ),
                       ),
@@ -227,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addTodoItem(requestFocus: true), // 新しいタスクを追加しフォーカス
+        onPressed: () => _addTodoItem(requestFocus: true), 
         tooltip: 'タスクを追加',
         child: Icon(Icons.add),
       ),
